@@ -23,6 +23,6 @@ def show_image(image: np.ndarray) -> None:
     plt.show()
 
 
-def get_today() -> datetime.date:
-    now = datetime.datetime.now()
-    return datetime.date(now.year, now.month, now.day)
+# def get_today() -> datetime.date:
+#     now = datetime.datetime.now()
+#     return datetime.date(now.year, now.month, now.day)

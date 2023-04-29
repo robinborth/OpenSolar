@@ -16,7 +16,7 @@ from opensolar.segmentation import (
     get_production_metric,
     get_roof_info,
 )
-from opensolar.utils import get_today, load_google_cloud_key
+from opensolar.utils import load_google_cloud_key
 
 st.set_page_config(page_title="OpenSolar", page_icon="🌤️")
 
@@ -98,7 +98,7 @@ if address_input:
         # create the time frame
         st.write("### Chart Configuration")
 
-        today = get_today()
+        today = datetime.date.today()
         start_date = st.date_input("Pick Start Date", value=today)
 
         metric = st.selectbox(
