@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opensolar"
+readme = "README.md"
+version = "0.0.1"
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+exclude = [
+    ".git",
+    ".gitignore",
+    ".mypy_cache",
+    "_pycache_/",
+    "README.md",
+    "pyproject.toml",
+    "data",
+    "venv"
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+
+[tool.ruff]
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    # "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".eggs",
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    "_pypackages_",
+    "venv",
+    "pyproject.toml",
+    "README.md",
+]
+
+[tool.ruff.per-file-ignores]
+"_init_.py" = ["F401"]

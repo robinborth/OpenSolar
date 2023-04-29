@@ -1,0 +1,7 @@
+streamlit
+pandas
+jupyter
+notebook
+mypy
+black
+pre-commit
