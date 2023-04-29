@@ -47,8 +47,8 @@ def get_kWh_production_dummy(
 
 @st.cache_data
 def create_date_series(
-    start_date: datetime.date | None = None,
-    delta: datetime.timedelta | None = None,
+    start_date,
+    delta,
 ) -> list[datetime.date]:
     """Creates a series of dates given a start date.
 
