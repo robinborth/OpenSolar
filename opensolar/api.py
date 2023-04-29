@@ -1,48 +1,50 @@
 import datetime
 import json
-from dataclasses import dataclass
 
 import cv2
 import numpy as np
 import requests
 
 
-@dataclass
-class WeatherInfo:
-    longitude: float
-    latitude: float
-    date: datetime.date
-    temperature: float
-    sunshine_minutes: int
-
-    @property
-    def sunshine_hours(self) -> float:
-        return self.sunshine_minutes / 60
-
-
-def get_weather_info(
+def get_kWh_production_dummy(
     longitude: float,
     latitude: float,
     date: datetime.date,
-) -> WeatherInfo:
-    """Retur
+    random_delta: float | None = None,
+) -> float:
+    """The ammount of kWh the roof can produce.
+
+    For the optimal value there is this map: https://globalsolaratlas.info/map?c=51.330612,10.447998,7&r=DEU
 
     Args:
-        long (float): _description_
-        lat (float): _description_
-        timestamp (date): _description_
+        latitude (float): The latitude.
+        longitude (float): The longitude.
+        date (datetime.date): The date of interest.
     """
+    # TODO write the correct function
+    avg_roof_size = 200
+    avg_kWh_per_sqm = 2.92
 
-    temperature = 20.2
-    sunshine_minutes = 234
+    base_kWh_roof = avg_roof_size * avg_kWh_per_sqm
 
-    return WeatherInfo(
-        longitude=longitude,
-        latitude=latitude,
-        date=date,
-        temperature=temperature,
-        sunshine_minutes=sunshine_minutes,
-    )
+    start_date = datetime.date(date.year, 1, 1)
+    day_in_year = (date - start_date).days
+
+    scale = 0.10
+    sin_factor = np.sin(
+        ((day_in_year - 1) / 365) * 2 * np.pi - np.pi / 2
+    ) + np.random.normal(0, 0.1)
+
+    margin = sin_factor * scale * base_kWh_roof
+
+    bias_day = np.abs(date.year - 2020) * 356 + day_in_year
+    bias_day_kWh = bias_day * 0.03
+
+    long_bias = np.abs(np.abs(longitude) - 180) * 0.2
+
+    if random_delta:
+        return base_kWh_roof + margin + bias_day_kWh + long_bias + random_delta
+    return base_kWh_roof + margin + bias_day_kWh + long_bias
 
 
 def get_address_info(
