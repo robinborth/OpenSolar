@@ -1,4 +1,7 @@
 streamlit
 pandas
 matplotlib
-opencv-python
+opencv-python-headless
+prophet
+pyproj
+Pillow
