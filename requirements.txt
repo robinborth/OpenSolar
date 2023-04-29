@@ -1,11 +1,4 @@
 streamlit
 pandas
-jupyter
-notebook
-mypy
-black
-pre-commit
 matplotlib
 opencv-python
-ultralyrics
-exportplotly
