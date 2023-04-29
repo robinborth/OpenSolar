@@ -102,7 +102,7 @@ def create_kWh_altair_plot(
     random_delta = np.random.normal(0, 10)
     kWhs = []
     for date in dates:
-        kWh = get_kWh_production_dummy(
+        kWh = get_kWh_production(
             longitude=longitude,
             latitude=latitude,
             date=date,

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from prophet import Prophet
 from pyproj import Transformer
+import datetime
 
 NODATA_VALUE = -999
 XLLCORNER = 3280500
@@ -45,7 +46,7 @@ def get_val(long, lat, month, year, type):
 
 def get_historical_data(long, lat):
     ds, direct, diff = [], [], []
-    for year in range(2013, 2023):
+    for year in range(2020, 2023):
         for month in range(1, 13):
             ds.append(f"{year}-{month}")
             direct.append(get_val(long, lat, month, year, "direct"))
@@ -63,7 +64,7 @@ def forecast_model(df):
 
 
 def get_prediction(model, date):
-    days = 365 * (date.year - 2023) + 30 * (date.month) + date.day + 20
+    days = date - datetime.date(2022, 12, 31) + 10
     future = model.make_future_dataframe(periods=days)
     forecast = model.predict(future)
     vals = forecast[forecast.ds == date.isoformat()]
