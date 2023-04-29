@@ -9,4 +9,4 @@ matplotlib
 opencv-python
 python-dotenv
 ultralyrics
-export
+exportplotly
