@@ -4,8 +4,8 @@ import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
-from forecast import get_future_infos
-from algorithms import panel_energy
+from opensolar.forecast import get_future_infos
+from opensolar.algorithms import panel_energy
 from typing import Union
 
 
