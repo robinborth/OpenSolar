@@ -64,7 +64,7 @@ def forecast_model(df):
 
 
 def get_prediction(model, date):
-    days = date - datetime.date(2022, 12, 31) + 10
+    days = (date - datetime.date(2022, 12, 31)).day + 10
     future = model.make_future_dataframe(periods=days)
     forecast = model.predict(future)
     vals = forecast[forecast.ds == date.isoformat()]
