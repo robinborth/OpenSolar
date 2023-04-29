@@ -2,3 +2,4 @@ streamlit
 pandas
 matplotlib
 opencv-python
+opensolar=0.0.1
