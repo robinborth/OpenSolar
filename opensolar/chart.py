@@ -4,9 +4,9 @@ import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
-from opensolar.forecast import get_future_infos
+
 from opensolar.algorithms import panel_energy
-from typing import Union
+from opensolar.forecast import get_future_infos
 
 
 @st.cache_data
@@ -42,23 +42,7 @@ def get_kWh_production(
             0.35,
             conversion_efficiency,
         )
-
-    start_date = datetime.date(date.year, 1, 1)
-    day_in_year = (date - start_date).days
-
-    scale = 0.10
-    sin_factor = np.sin(
-        ((day_in_year - 1) / 365) * 2 * np.pi - np.pi / 2
-    ) + np.random.normal(0, 0.1)
-
-    margin = sin_factor * scale * base_kWh_roof
-
-    bias_day = np.abs(date.year - 2020) * 356 + day_in_year
-    bias_day_kWh = bias_day * 0.03
-
-    long_bias = np.abs(np.abs(longitude) - 180) * 0.2
-
-    return base_kWh_roof + margin + bias_day_kWh + long_bias
+    return base_kWh_roof
 
 
 @st.cache_data
