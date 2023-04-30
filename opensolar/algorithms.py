@@ -1,7 +1,7 @@
 """
     refer to https://github.com/emp0ry/solar-calculator/blob/main/main.py for code detail
 """
-from math import radians, sin, cos, asin, atan2
+from math import asin, atan2, cos, radians, sin
 
 
 def panel_energy(

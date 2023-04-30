@@ -69,14 +69,14 @@ if address_input:
         st.write("### Solar Panel Configuration")
         roof_cols = st.columns(len(roofs))
         ratios: list = []
-        for roof, col in zip(roofs, roof_cols, strict=True):
+        for index, (roof, col) in enumerate(zip(roofs, roof_cols, strict=True)):
             with col:
                 sl1 = st.slider(
                     label=f"**({roof.orientation})** Number Panels",
                     value=roof.num_solar_panels,
                     min_value=0,
                     max_value=roof.num_solar_panels,
-                    key=roof.instance_id,
+                    key=index,
                 )
                 ratios.append(sl1 / roof.num_solar_panels)
 

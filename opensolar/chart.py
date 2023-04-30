@@ -5,44 +5,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from opensolar.algorithms import panel_energy
-from opensolar.forecast import get_future_infos
-
-
-@st.cache_data
-def get_kWh_production(
-    longitude: float,
-    latitude: float,
-    date: datetime.date,
-    conversion_efficiency: float = 0.3,
-) -> float:
-    """The ammount of kWh the roof can produce.
-
-    For the optimal value there is this map: https://globalsolaratlas.info/map?c=51.330612,10.447998,7&r=DEU
-
-    Args:
-        latitude (float): The latitude.
-        longitude (float): The longitude.
-        date (datetime.date): The date of interest.
-        conversion_efficiency: the panel's radiation conversion rate
-    """
-    # roofs = get_roof_info(longitude, latitude)
-    roofs = [{"panel_area": 40, "direction": 120}, {"panel_area": 30, "direction": 300}]
-    avg_kwh_per_sqm = get_future_infos(longitude, latitude, date)
-
-    base_kWh_roof = 0
-    for roof in roofs:
-        base_kWh_roof += panel_energy(
-            longitude,
-            latitude,
-            date,
-            avg_kwh_per_sqm,
-            roof["panel_area"],
-            roof["direction"],
-            0.35,
-            conversion_efficiency,
-        )
-    return base_kWh_roof
+from opensolar.forecast import get_kWh_production
 
 
 @st.cache_data
@@ -104,5 +67,7 @@ def create_kWh_altair_plot(
             y="kWh:Q",
         )
     )
+
+    return chart
 
     return chart
