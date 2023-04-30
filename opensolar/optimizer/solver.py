@@ -61,6 +61,14 @@ def place_solar_panels(rooftop_parts, orig_image, solar_panel_size=(10, 50)):
 
         mask = ((labels == label) * 255).astype(np.uint8)
 
+        # compute edge map
+        aux_mask = mask > 0
+        masked_image = orig_image * np.repeat(aux_mask[..., None], 3, -1)
+
+        gray_image = cv2.cvtColor(masked_image, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(image=gray_image, threshold1=80, threshold2=150)
+        edge_maps.append(edges)
+
         # contours,_ = cv2.findContours(mask, 1, 2)
         # contour = contours[0]
         # rect = cv2.minAreaRect(contour)
@@ -124,13 +132,6 @@ def place_solar_panels(rooftop_parts, orig_image, solar_panel_size=(10, 50)):
             
             panels_polygon = panels_polygon.astype(np.int32)
             # aux_mask_for_draw = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
-            
-            # compute edge map
-            aux_mask = mask > 0
-            masked_image = orig_image * np.repeat(aux_mask[..., None], 3, -1)
-
-            gray_image = cv2.cvtColor(masked_image, cv2.COLOR_BGR2GRAY)
-            edges = cv2.Canny(image=gray_image, threshold1=80, threshold2=150)
 
             # cv2.imshow('gray_image', gray_image)
             # cv2.imshow('edge_map', edges)
@@ -142,7 +143,6 @@ def place_solar_panels(rooftop_parts, orig_image, solar_panel_size=(10, 50)):
                         rooftop_part_info['panels'].append([(panel[0], panel[1]), (panel[2], panel[3]), (panel[4], panel[5]), (panel[6], panel[7])])
             
             final_panels.append(rooftop_part_info)
-            edge_maps.append(edges)
             # cv2.imshow('mask', aux_mask_for_draw)
             # cv2.waitKey(0)
     return final_panels, edge_maps

@@ -9,6 +9,25 @@ import streamlit as st
 from opensolar.algorithms import panel_energy
 
 
+angles = {
+    'N': 0,
+    'NNE': 22,
+    'NE': 45,
+    'ENE': 67,
+    'E': 90,
+    'ESE': 112,
+    'SE': 135,
+    'SSE': 157,
+    'S': 180,
+    'SSW': 202,
+    'SW': 225,
+    'WSW': 247,
+    'W': 270,
+    'WNW': 292,
+    'NW': 315,
+    'NNW': 337 
+}
+
 @st.cache_data
 def get_google_maps_image(
     latitude: float,
@@ -50,7 +69,7 @@ class Roof:
     @property
     def tilt_angle(self) -> float:
         # TODO make that better and complete, lookup
-        return 0.0
+        return angles[orientation]
 
     @property
     def total_area(self) -> float:

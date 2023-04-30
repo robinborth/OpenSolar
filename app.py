@@ -16,6 +16,7 @@ from opensolar.segmentation import (
     get_google_maps_image,
     get_production_metric,
     get_roof_info,
+    Roof
 )
 from opensolar.utils import get_next_month_first_dates, load_google_cloud_key
 from opensolar.detection import Detector
@@ -46,10 +47,9 @@ def load_model():
     return Detector(conf_thres=0.45, iou_thres=0.7, weight_path="./opensolar/detection/weights/best.pt")
 
 @st.cache_data
-def get_images(image):
+def get_infos(image):
     # Process image
     meta_info, pred = detector.detect(image)
-    print([x['cls'] for x in pred])
     image_segmentation = draw_instance_masks(meta_info, pred)
 
     roof_panels, edges_maps = place_solar_panels(pred, image)
@@ -57,7 +57,13 @@ def get_images(image):
 
     image_segmentation = draw_edge_maps(image_segmentation, edges_maps)
 
-    return image_segmentation, image_solar_panels
+    roofs = []
+
+    for roof in roof_panels:
+        if len(roof['panels']) > 0:
+            roofs.append(Roof(orientation=roof['orientation'], num_solar_panels=len(roof['panels'])))
+
+    return image_segmentation, image_solar_panels, roofs
 
 detector = load_model()
 
@@ -77,19 +83,7 @@ if address_input:
         )
 
         # Process image
-        # meta_info, pred = detector.detect(image)
-        # print([x['cls'] for x in pred])
-        # image_segmentation = draw_instance_masks(meta_info, pred)
-
-        # roof_panels, edges_maps = place_solar_panels(pred, image)
-        # image_solar_panels = draw_panels(image.copy(), roof_panels)
-
-        # image_segmentation = draw_edge_maps(image_segmentation, edges_maps)
-
-        image_segmentation, image_solar_panels = get_images(image)
-        
-        # The meta data of the image
-        roofs = get_roof_info(image)
+        image_segmentation, image_solar_panels, roofs = get_infos(image)
 
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -101,33 +95,35 @@ if address_input:
 
         # Solar Panel Configuration Block
         st.write("### Solar Panel Configuration")
-        roof_cols = st.columns(len(roofs))
-        ratios: list = []
-        for index, (roof, col) in enumerate(zip(roofs, roof_cols, strict=True)):
-            with col:
-                sl1 = st.slider(
-                    label=f"**({roof.orientation})** Number Panels",
-                    value=roof.num_solar_panels,
-                    min_value=0,
-                    max_value=roof.num_solar_panels,
-                    key=index,
-                )
-                ratios.append(sl1 / roof.num_solar_panels)
+        if roofs:
+            roof_cols = st.columns(len(roofs))
+            ratios: list = []
+            
+            for index, (roof, col) in enumerate(zip(roofs, roof_cols, strict=True)):
+                with col:
+                    sl1 = st.slider(
+                        label=f"**({roof.orientation})** Number Panels",
+                        value=roof.num_solar_panels,
+                        min_value=0,
+                        max_value=roof.num_solar_panels,
+                        key=index,
+                    )
+                    ratios.append(sl1 / roof.num_solar_panels)
 
-        # This is just for centering the metrics
-        _, metric1, metric2, _ = st.columns((2, 3, 3, 1))
-        with metric1:
-            # TODO make this correct
-            _, pcurrent, pdelta = get_production_metric(roofs, ratios)
-            st.metric(
-                label="⚡ Production",
-                value=f"{pcurrent:.2f} kWh",
-                delta=f"{pdelta:.2f}%",
-            )
-        with metric2:
-            # TODO make this correct current selected one
-            _, ccurrent, cdelta = get_cost_metric(roofs, ratios)
-            st.metric(label="💰 Cost", value=f"{ccurrent:.2f}$", delta=f"-{cdelta:.2f}%")
+            # This is just for centering the metrics
+            _, metric1, metric2, _ = st.columns((2, 3, 3, 1))
+            with metric1:
+                # TODO make this correct
+                _, pcurrent, pdelta = get_production_metric(roofs, ratios)
+                st.metric(
+                    label="⚡ Production",
+                    value=f"{pcurrent:.2f} kWh",
+                    delta=f"{pdelta:.2f}%",
+                )
+            with metric2:
+                # TODO make this correct current selected one
+                _, ccurrent, cdelta = get_cost_metric(roofs, ratios)
+                st.metric(label="💰 Cost", value=f"{ccurrent:.2f}$", delta=f"-{cdelta:.2f}%")
 
         # create the time frame
         st.write("### Chart Configuration")
