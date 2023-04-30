@@ -28,7 +28,7 @@ def get_kWh_production(
     """
     # roofs = get_roof_info(longitude, latitude)
     roofs = [{"panel_area": 40, "direction": 120}, {"panel_area": 30, "direction": 300}]
-    avg_kwh_per_sqm_dict = get_future_infos(longitude, latitude, date)
+    avg_kwh_per_sqm = get_future_infos(longitude, latitude, date)
 
     base_kWh_roof = 0
     for roof in roofs:
@@ -36,7 +36,7 @@ def get_kWh_production(
             longitude,
             latitude,
             date,
-            avg_kwh_per_sqm_dict,
+            avg_kwh_per_sqm,
             roof["panel_area"],
             roof["direction"],
             0.35,

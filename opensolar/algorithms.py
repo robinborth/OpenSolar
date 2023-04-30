@@ -14,7 +14,7 @@ def panel_energy(
     tilt,
     conversion_efficiency: float = 0.2,
 ) -> float:
-    diffuse_energy = info["diffuse"]["actual"] * conversion_efficiency
+    diffuse_energy = info["diffuse"] * conversion_efficiency
 
     rlat = radians(lat)
     rlon = radians(long)
@@ -56,8 +56,6 @@ def panel_energy(
     cos_incidence_angle = cos(elevation) * cos(tilt) * sin(direction - azimuth) + sin(
         elevation
     ) * cos(direction - azimuth)
-    direct_energy = (
-        info["direct"]["actual"] * conversion_efficiency * cos_incidence_angle
-    )
+    direct_energy = info["direct"] * conversion_efficiency * cos_incidence_angle
 
     return (diffuse_energy + direct_energy) * area

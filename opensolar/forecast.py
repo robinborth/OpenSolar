@@ -44,7 +44,7 @@ def get_val(long, lat, month, year, type):
     full_path = os.path.join(base, fp)
     data = np.loadtxt(full_path, skiprows=28)
     data[data == NODATA_VALUE] = np.nan
-    val = data[x, y] if data[x, y] != np.nan else -100
+    val = data[x, y]
 
     return val
 
@@ -70,17 +70,13 @@ def forecast_model(df):
 
 
 def get_prediction(model, date):
-    days = (date - datetime.date(2022, 12, 31)).days + 10
+    days = (date - datetime.date(2022, 12, 31)).days + 30
     future = model.make_future_dataframe(periods=days)
     forecast = model.predict(future)
     vals = forecast[forecast.ds == date.isoformat()]
 
     # TODO throws error
-    return {
-        "actual": vals["yhat"].values[0],
-        "upper": vals["yhat_upper"].values[0],
-        "lower": vals["yhat_lower"].values[0],
-    }
+    return vals["yhat"].values[0]
 
 
 @st.cache_data
