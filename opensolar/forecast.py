@@ -37,8 +37,8 @@ def coord_to_grids(long: float, lat: float) -> tuple:
 def get_val(long, lat, month, year, type):
     x, y = coord_to_grids(long, lat)
     print(x, y)
-    base = os.get
-    fp = f"dataset/radiation_{type}_3y/{type}_{year}{month:02d}.asc"
+    base = os.getcwd()
+    fp = os.path.join(base, f"dataset/radiation_{type}_3y/{type}_{year}{month:02d}.asc")
     data = np.loadtxt(fp, skiprows=28)
     data[data == NODATA_VALUE] = np.nan
     val = data[x, y] if data[x, y] != np.nan else -100
