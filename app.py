@@ -9,7 +9,10 @@ import datetime
 import altair as alt
 import streamlit as st
 
+from opensolar.detection import Detector
+from opensolar.draw_utils import draw_edge_maps, draw_instance_masks, draw_panels
 from opensolar.forecast import get_chart_data
+from opensolar.optimizer.solver import place_solar_panels
 from opensolar.search import AddressNotFoundError, get_address_info
 from opensolar.segmentation import (
     get_cost_metric,
@@ -18,9 +21,6 @@ from opensolar.segmentation import (
     get_roof_info,
 )
 from opensolar.utils import get_next_month_first_dates, load_google_cloud_key
-from opensolar.detection import Detector
-from opensolar.draw_utils import draw_instance_masks, draw_panels, draw_edge_maps
-from opensolar.optimizer.solver import place_solar_panels
 
 st.set_page_config(page_title="OpenSolar", page_icon="🌤️")
 
@@ -41,15 +41,21 @@ address_input = st.text_input(
     value=example_address,
 )
 
+
 @st.cache_resource
 def load_model():
-    return Detector(conf_thres=0.45, iou_thres=0.7, weight_path="./opensolar/detection/weights/best.pt")
+    return Detector(
+        conf_thres=0.45,
+        iou_thres=0.7,
+        weight_path="./opensolar/detection/weights/best.pt",
+    )
+
 
 @st.cache_data
 def get_images(image):
     # Process image
     meta_info, pred = detector.detect(image)
-    print([x['cls'] for x in pred])
+    print([x["cls"] for x in pred])
     image_segmentation = draw_instance_masks(meta_info, pred)
 
     roof_panels, edges_maps = place_solar_panels(pred, image)
@@ -58,6 +64,7 @@ def get_images(image):
     image_segmentation = draw_edge_maps(image_segmentation, edges_maps)
 
     return image_segmentation, image_solar_panels
+
 
 detector = load_model()
 
@@ -87,7 +94,7 @@ if address_input:
         # image_segmentation = draw_edge_maps(image_segmentation, edges_maps)
 
         image_segmentation, image_solar_panels = get_images(image)
-        
+
         # The meta data of the image
         roofs = get_roof_info(image)
 
@@ -117,7 +124,6 @@ if address_input:
         # This is just for centering the metrics
         _, metric1, metric2, _ = st.columns((2, 3, 3, 1))
         with metric1:
-            # TODO make this correct
             _, pcurrent, pdelta = get_production_metric(roofs, ratios)
             st.metric(
                 label="⚡ Production",
@@ -125,14 +131,13 @@ if address_input:
                 delta=f"{pdelta:.2f}%",
             )
         with metric2:
-            # TODO make this correct current selected one
             _, ccurrent, cdelta = get_cost_metric(roofs, ratios)
             st.metric(label="💰 Cost", value=f"{ccurrent:.2f}$", delta=f"-{cdelta:.2f}%")
 
         # create the time frame
         st.write("### Chart Configuration")
         min_year = 1
-        max_year = 10
+        max_year = 2
 
         start_date = st.date_input("Pick Start Date", value=datetime.date.today())
         num_years = st.slider(
@@ -144,17 +149,24 @@ if address_input:
             start_date=start_date,
             num_years=max_year,
         )
-        chart_data = get_chart_data(
+        full_chart_data = get_chart_data(
             roofs=roofs,
             longitude=address.longitude,
             latitude=address.latitude,
             dates=dates,
         )
-
-        # metric = st.selectbox(
-        #     options=["kWh", "revenue"],
-        #     label="Select Output Metric",
-        # )
+        chart_data = full_chart_data[: num_years * 12]
+        st.dataframe(chart_data)
+        metric = st.selectbox(
+            options=[
+                "kWh",
+                "revenue",
+                "earning",
+                "diffuse_radiation",
+                "direct_radiation",
+            ],
+            label="Select Output Metric",
+        )
 
         st.write("### 📊 OpenSolar Chart")
         chart = (
@@ -166,6 +178,27 @@ if address_input:
             )
         )
         st.altair_chart(chart)
+
+        # This is just for centering the metrics
+        _, metric1, metric2, metric3, _ = st.columns((2, 3, 3, 3, 1))
+        with metric1:
+            st.metric(
+                label="⚡ Total Production",
+                value=f"{pcurrent:.2f} kWh",
+                delta=f"{pdelta:.2f}%",
+            )
+        with metric2:
+            st.metric(
+                label="📈 Total Revenue",
+                value=f"{ccurrent:.2f}$",
+                delta=f"-{cdelta:.2f}%",
+            )
+        with metric3:
+            st.metric(
+                label="🌳 Trees Plant",
+                value=f"{ccurrent:.2f}$",
+                delta=f"-{cdelta:.2f}%",
+            )
     except AddressNotFoundError:
         st.error(
             """Not able to find the address!

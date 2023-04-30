@@ -81,6 +81,7 @@ def get_cost_metric(
     return total, current, delta
 
 
+@st.cache_data
 def get_roof_info(image: np.ndarray) -> list[Roof]:
     # TOOD calc here the model
     roof1 = Roof(orientation="NNE", num_solar_panels=3)

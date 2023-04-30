@@ -111,12 +111,16 @@ def get_chart_data(
         date (datetime.date): The date of interest.
         conversion_efficiency: the panel's radiation conversion rate
     """
-    kWhs: list[float] = []
+    total_kWhs: list[float] = []
+    diffuse_radiation: list[float] = []
+    direct_radiation: list[float] = []
     for date in dates:
-        kWs = 0.0
+        total_kWh = 0.0
         avg_kwh_per_sqm = get_future_infos(longitude, latitude, date)
+        diffuse_radiation.append(avg_kwh_per_sqm["diffuse"])
+        direct_radiation.append(avg_kwh_per_sqm["direct"])
         for roof in roofs:
-            kWs += panel_energy(
+            total_kWh += panel_energy(
                 longitude,
                 latitude,
                 date,
@@ -126,9 +130,16 @@ def get_chart_data(
                 0.35,
                 conversion_efficiency,
             )
-        kWhs.append(kWs)
+        total_kWhs.append(total_kWh)
 
-    df = pd.DataFrame({"date": dates, "kWh": kWhs})
+    df = pd.DataFrame(
+        {
+            "date": dates,
+            "kWh": total_kWhs,
+            "diffuse_radiation": diffuse_radiation,
+            "direct_radiation": direct_radiation,
+        }
+    )
     df["date"] = pd.to_datetime(df["date"])
     df["earning"] = df["kWh"].cumsum() * 0.0769
     total_cost = sum([roof.num_solar_panels * roof.cost_per_panel for roof in roofs])
