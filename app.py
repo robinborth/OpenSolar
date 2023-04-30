@@ -41,7 +41,25 @@ address_input = st.text_input(
     value=example_address,
 )
 
-detector = Detector(conf_thres=0.45, iou_thres=0.7, weight_path="./opensolar/detection/weights/best.pt")
+@st.cache_resource
+def load_model():
+    return Detector(conf_thres=0.45, iou_thres=0.7, weight_path="./opensolar/detection/weights/best.pt")
+
+@st.cache_data
+def get_images(image):
+    # Process image
+    meta_info, pred = detector.detect(image)
+    print([x['cls'] for x in pred])
+    image_segmentation = draw_instance_masks(meta_info, pred)
+
+    roof_panels, edges_maps = place_solar_panels(pred, image)
+    image_solar_panels = draw_panels(image.copy(), roof_panels)
+
+    image_segmentation = draw_edge_maps(image_segmentation, edges_maps)
+
+    return image_segmentation, image_solar_panels
+
+detector = load_model()
 
 if address_input:
     try:
@@ -59,14 +77,16 @@ if address_input:
         )
 
         # Process image
-        meta_info, pred = detector.detect(image)
-        print([x['cls'] for x in pred])
-        image_segmentation = draw_instance_masks(meta_info, pred)
+        # meta_info, pred = detector.detect(image)
+        # print([x['cls'] for x in pred])
+        # image_segmentation = draw_instance_masks(meta_info, pred)
 
-        roof_panels, edges_maps = place_solar_panels(pred, image)
-        image_solar_panels = draw_panels(image.copy(), roof_panels)
+        # roof_panels, edges_maps = place_solar_panels(pred, image)
+        # image_solar_panels = draw_panels(image.copy(), roof_panels)
 
-        image_segmentation = draw_edge_maps(image_segmentation, edges_maps)
+        # image_segmentation = draw_edge_maps(image_segmentation, edges_maps)
+
+        image_segmentation, image_solar_panels = get_images(image)
         
         # The meta data of the image
         roofs = get_roof_info(image)
