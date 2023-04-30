@@ -5,9 +5,10 @@ import os
 import numpy as np
 import pandas as pd
 import streamlit as st
+from matplotlib import pyplot
 from prophet import Prophet
 from pyproj import Transformer
-from matplotlib import pyplot
+
 from opensolar.algorithms import panel_energy
 from opensolar.segmentation import Roof
 
@@ -76,24 +77,24 @@ def get_prediction(model, date):
     months = ((date - datetime.date(2022, 12, 31)).days + 10) // 30
     future = model.make_future_dataframe(periods=months, freq="MS")
     forecast = model.predict(future)
-    model.plot(forecast)
-    pyplot.savefig("fig.jpg")
+    # model.plot(forecast)
+    # pyplot.savefig("fig.jpg")
     # vals = forecast[forecast.ds == date.isoformat()]
     # return vals["yhat"].values[0]
     return forecast
 
 
-def get_future_infos(long: float, lat: float, date):
-    """Returns for the given dates all of the predictions"""
-    direct_df, diff_df = get_historical_data(long, lat)
-    direct_model = forecast_model(direct_df)
-    diff_model = forecast_model(diff_df)
+# def get_future_infos(long: float, lat: float, date):
+#     """Returns for the given dates all of the predictions"""
+#     direct_df, diff_df = get_historical_data(long, lat)
+#     direct_model = forecast_model(direct_df)
+#     diff_model = forecast_model(diff_df)
 
-    return {
-        "date": date,
-        "direct": get_prediction(direct_model, date),
-        "diffuse": get_prediction(diff_model, date),
-    }
+# return {
+#     "date": date,
+#     "direct": get_prediction(direct_model, date),
+#     "diffuse": get_prediction(diff_model, date),
+# }
 
 
 @st.cache_data
@@ -115,18 +116,37 @@ def get_chart_data(
         conversion_efficiency: the panel's radiation conversion rate
     """
     total_kWhs: list[float] = []
-    diffuse_radiation: list[float] = []
-    direct_radiation: list[float] = []
-    for date in dates:
+
+    direct_df, diff_df = get_historical_data(longitude, latitude)
+
+    direct_model = forecast_model(direct_df)
+    diff_model = forecast_model(diff_df)
+
+    direct_radiation = get_prediction(direct_model, dates[-1])
+    diffuse_radiation = get_prediction(diff_model, dates[-1])
+    print(len(dates))
+    print(len(diffuse_radiation.tail(len(dates))))
+    print(len(diffuse_radiation))
+    print(diffuse_radiation)
+    df = pd.DataFrame.from_dict(
+        {
+            "date": dates,
+            "diffuse_radiation": diffuse_radiation.tail(len(dates))["yhat"],
+            "direct_radiation": direct_radiation.tail(len(dates))["yhat"],
+        }
+    )
+
+    for _, row in df.iterrows():
         total_kWh = 0.0
-        avg_kwh_per_sqm = get_future_infos(longitude, latitude, date)
-        diffuse_radiation.append(avg_kwh_per_sqm["diffuse"])
-        direct_radiation.append(avg_kwh_per_sqm["direct"])
+        avg_kwh_per_sqm = {
+            "diffuse": row["diffuse_radiation"],
+            "direct": row["direct_radiation"],
+        }
         for roof in roofs:
             total_kWh += panel_energy(
                 longitude,
                 latitude,
-                date,
+                row["date"],
                 avg_kwh_per_sqm,
                 roof.total_area,
                 roof.tilt_angle,
@@ -135,14 +155,7 @@ def get_chart_data(
             )
         total_kWhs.append(total_kWh)
 
-    df = pd.DataFrame(
-        {
-            "date": dates,
-            "kWh": total_kWhs,
-            "diffuse_radiation": diffuse_radiation,
-            "direct_radiation": direct_radiation,
-        }
-    )
+    df["kWh"] = total_kWhs
     df["date"] = pd.to_datetime(df["date"])
     df["earning"] = df["kWh"].cumsum() * 0.0769
     total_cost = sum([roof.num_solar_panels * roof.cost_per_panel for roof in roofs])

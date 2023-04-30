@@ -15,11 +15,10 @@ from opensolar.forecast import get_chart_data
 from opensolar.optimizer.solver import place_solar_panels
 from opensolar.search import AddressNotFoundError, get_address_info
 from opensolar.segmentation import (
+    Roof,
     get_cost_metric,
     get_google_maps_image,
     get_production_metric,
-    get_roof_info,
-    Roof
 )
 from opensolar.utils import get_next_month_first_dates, load_google_cloud_key
 
@@ -66,8 +65,13 @@ def get_infos(image):
     roofs = []
 
     for roof in roof_panels:
-        if len(roof['panels']) > 0:
-            roofs.append(Roof(orientation=roof['orientation'], num_solar_panels=len(roof['panels'])))
+        if len(roof["panels"]) > 0:
+            roofs.append(
+                Roof(
+                    orientation=roof["orientation"],
+                    num_solar_panels=len(roof["panels"]),
+                )
+            )
 
     return image_segmentation, image_solar_panels, roofs
 
@@ -105,7 +109,7 @@ if address_input:
         if roofs:
             roof_cols = st.columns(len(roofs))
             ratios: list = []
-            
+
             for index, (roof, col) in enumerate(zip(roofs, roof_cols, strict=True)):
                 with col:
                     sl1 = st.slider(
@@ -128,78 +132,80 @@ if address_input:
                 )
             with metric2:
                 _, ccurrent, cdelta = get_cost_metric(roofs, ratios)
-                st.metric(label="💰 Cost", value=f"{ccurrent:.2f}$", delta=f"-{cdelta:.2f}%")
+                st.metric(
+                    label="💰 Cost", value=f"{ccurrent:.2f}$", delta=f"-{cdelta:.2f}%"
+                )
 
-        # create the time frame
-        st.write("### Chart Configuration")
-        min_year = 1
-        max_year = 2
+            # create the time frame
+            st.write("### Chart Configuration")
+            min_year = 1
+            max_year = 2
 
-        start_date = st.date_input("Pick Start Date", value=datetime.date.today())
-        num_years = st.slider(
-            min_value=min_year,
-            max_value=max_year,
-            label="Delta In Year",
-        )
-        dates = get_next_month_first_dates(
-            start_date=start_date,
-            num_years=max_year,
-        )
-        metric = st.selectbox(
-            options=[
-                "kWh",
-                "revenue",
-                "earning",
-                "diffuse_radiation",
-                "direct_radiation",
-            ],
-            label="Select Output Metric",
-        )
-
-        full_chart_data = get_chart_data(
-            roofs=roofs,
-            longitude=address.longitude,
-            latitude=address.latitude,
-            dates=dates,
-        )
-        chart_data = full_chart_data[: num_years * 12]
-        st.dataframe(chart_data)
-
-        st.write("### 📊 OpenSolar Chart")
-        chart = (
-            alt.Chart(chart_data)
-            .mark_line()
-            .encode(
-                x="date:T",
-                y="kWh:Q",
+            start_date = st.date_input("Pick Start Date", value=datetime.date.today())
+            num_years = st.slider(
+                min_value=min_year,
+                max_value=max_year,
+                label="Delta In Year",
             )
-        )
-        st.altair_chart(chart)
+            dates = get_next_month_first_dates(
+                start_date=start_date,
+                num_years=max_year,
+            )
+            metric = st.selectbox(
+                options=[
+                    "kWh",
+                    "revenue",
+                    "earning",
+                    "diffuse_radiation",
+                    "direct_radiation",
+                ],
+                label="Select Output Metric",
+            )
 
-        # This is just for centering the metrics
-        _, metric1, metric2, metric3 = st.columns((1, 4, 4, 4))
-        with metric1:
-            total_production = chart_data["kWh"].sum()
-            st.metric(
-                label="⚡ Total Production",
-                value=f"{total_production:.2f} kWh",
-                delta=f"{pdelta:.2f}%",
+            full_chart_data = get_chart_data(
+                roofs=roofs,
+                longitude=address.longitude,
+                latitude=address.latitude,
+                dates=dates,
             )
-        with metric2:
-            total_revenue = chart_data["revenue"].max()
-            st.metric(
-                label="📈 Total Revenue",
-                value=f"{total_revenue:.2f}$",
-                delta=f"{total_revenue:.2f}%",
+            chart_data = full_chart_data[: num_years * 12]
+            st.dataframe(chart_data)
+
+            st.write("### 📊 OpenSolar Chart")
+            chart = (
+                alt.Chart(chart_data)
+                .mark_line()
+                .encode(
+                    x="date:T",
+                    y="kWh:Q",
+                )
             )
-        with metric3:
-            tree_per_kwh = 55.3
-            trees = total_production // tree_per_kwh
-            st.metric(
-                label="🌳 Equivalent Trees",
-                value=f"{trees}",
-                delta=f"{trees}",
-            )
+            st.altair_chart(chart)
+
+            # This is just for centering the metrics
+            _, metric1, metric2, metric3 = st.columns((1, 4, 4, 4))
+            with metric1:
+                total_production = chart_data["kWh"].sum()
+                st.metric(
+                    label="⚡ Total Production",
+                    value=f"{total_production:.2f} kWh",
+                    delta=f"{pdelta:.2f}%",
+                )
+            with metric2:
+                total_revenue = chart_data["revenue"].max()
+                st.metric(
+                    label="📈 Total Revenue",
+                    value=f"{total_revenue:.2f}$",
+                    delta=f"{total_revenue:.2f}%",
+                )
+            with metric3:
+                tree_per_kwh = 55.3
+                trees = total_production // tree_per_kwh
+                st.metric(
+                    label="🌳 Equivalent Trees",
+                    value=f"{trees}",
+                    delta=f"{trees}",
+                )
     except AddressNotFoundError:
         st.error(
             """Not able to find the address!
