@@ -1,9 +1,12 @@
+import datetime
 from dataclasses import dataclass
 
 import cv2
 import numpy as np
 import requests
 import streamlit as st
+
+from opensolar.algorithms import panel_energy
 
 
 @st.cache_data
@@ -37,101 +40,49 @@ def get_google_maps_image(
 
 
 @dataclass
-class SegmentationInstance:
-    instance_id: int
-    mask: list[tuple[int, int]]
-
-    @property
-    def square_meter(self) -> float:
-        # TODO we need to look that up, should be calc with mask
-        return 2.0
-
-
-@dataclass
-class Roof(SegmentationInstance):
+class Roof:
     orientation: str
-    solar_panels: list[SegmentationInstance]
-    obstacle: list[SegmentationInstance]
-
-    @property
-    def used_square_meter(self) -> float:
-        total_sum: float = 0.0
-        for panel in self.solar_panels:
-            total_sum += panel.square_meter
-        return total_sum
-
-    @property
-    def max_square_meter(self) -> float:
-        # TODO we need to calc that exaclty
-        total_sum: float = self.used_square_meter
-        return total_sum * 1.2
-
-    @property
-    def unused_sqare_meter(self) -> float:
-        return self.max_square_meter - self.used_square_meter
+    num_solar_panels: int
+    area_per_panel: float = 1.8974
+    cost_per_panel: float = 174
+    default_kWh: float = 2.94
 
     @property
     def tilt_angle(self) -> float:
-        # TODO make that better and complete
-        lookup = {"N": 0, "NNE": 22.5}
-        return lookup[self.orientation]
+        # TODO make that better and complete, lookup
+        return 0.0
 
     @property
-    def color(self) -> str:
-        # TODO make a lookup from self.orientation to color
-        return "red"
-
-    @property
-    def num_solar_panels(self) -> int:
-        return len(self.solar_panels)
-
-
-def get_roof_info(image: np.ndarray) -> list[Roof]:
-    # TOOD calc here the model
-    roof1 = Roof(
-        instance_id=1,
-        mask=[],
-        orientation="NNE",
-        solar_panels=[
-            SegmentationInstance(instance_id=1, mask=[]),
-            SegmentationInstance(instance_id=2, mask=[]),
-            SegmentationInstance(instance_id=3, mask=[]),
-        ],
-        obstacle=[],
-    )
-    roof2 = Roof(
-        instance_id=2,
-        mask=[],
-        orientation="N",
-        solar_panels=[
-            SegmentationInstance(instance_id=4, mask=[]),
-            SegmentationInstance(instance_id=5, mask=[]),
-        ],
-        obstacle=[],
-    )
-    return [roof1, roof2]
+    def total_area(self) -> float:
+        return self.num_solar_panels * self.area_per_panel
 
 
 def get_production_metric(
     roofs: list,
     ratios: list,
 ):
-    total = sum([roof.max_square_meter for roof in roofs])
+    total = sum([roof.num_solar_panels * roof.default_kWh for roof in roofs])
     current = 0
     for roof, ratio in zip(roofs, ratios, strict=True):
-        current += roof.max_square_meter * ratio
+        current += roof.num_solar_panels * ratio * roof.default_kWh
     delta = (current / total) * 100
     return total, current, delta
 
 
 def get_cost_metric(
-    roofs: list,
+    roofs: list[Roof],
     ratios: list,
-    cost_per_panel: float = 1423.43,
 ):
-    total = sum([roof.num_solar_panels for roof in roofs]) * cost_per_panel
+    total = sum([roof.num_solar_panels * roof.cost_per_panel for roof in roofs])
     current = 0
     for roof, ratio in zip(roofs, ratios, strict=True):
-        current += roof.num_solar_panels * ratio * cost_per_panel
+        current += roof.num_solar_panels * ratio * roof.cost_per_panel
     delta = (1 - current / total) * 100
     return total, current, delta
+
+
+def get_roof_info(image: np.ndarray) -> list[Roof]:
+    # TOOD calc here the model
+    roof1 = Roof(orientation="NNE", num_solar_panels=3)
+    roof2 = Roof(orientation="N", num_solar_panels=2)
+    return [roof1, roof2]

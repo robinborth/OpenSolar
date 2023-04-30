@@ -1,10 +1,15 @@
+import datetime
 import math
 import os
+
 import numpy as np
 import pandas as pd
+import streamlit as st
 from prophet import Prophet
 from pyproj import Transformer
-import datetime
+
+from opensolar.algorithms import panel_energy
+from opensolar.segmentation import Roof
 
 NODATA_VALUE = -999
 XLLCORNER = 3280500
@@ -36,16 +41,18 @@ def coord_to_grids(long: float, lat: float) -> tuple:
 
 def get_val(long, lat, month, year, type):
     x, y = coord_to_grids(long, lat)
-    print(x, y)
+
     base = os.getcwd()
-    fp = os.path.join(base, f"dataset/radiation_{type}_3y/{type}_{year}{month:02d}.asc")
-    data = np.loadtxt(fp, skiprows=28)
+    fp = f"dataset/radiation_{type}_3y/{type}_{year}{month:02d}.asc"
+    full_path = os.path.join(base, fp)
+    data = np.loadtxt(full_path, skiprows=28)
     data[data == NODATA_VALUE] = np.nan
-    val = data[x, y] if data[x, y] != np.nan else -100
+    val = data[x, y]
 
     return val
 
 
+@st.cache_data
 def get_historical_data(long, lat):
     ds, direct, diff = [], [], []
     for year in range(2020, 2023):
@@ -66,23 +73,61 @@ def forecast_model(df):
 
 
 def get_prediction(model, date):
-    days = (date - datetime.date(2022, 12, 31)).days + 10
+    days = (date - datetime.date(2022, 12, 31)).days + 30
     future = model.make_future_dataframe(periods=days)
     forecast = model.predict(future)
     vals = forecast[forecast.ds == date.isoformat()]
-
-    return {
-        "actual": vals["yhat"].values[0] / 30,
-        "upper": vals["yhat_upper"].values[0] / 30,
-        "lower": vals["yhat_lower"].values[0] / 30,
-    }
+    return vals["yhat"].values[0]
 
 
-def get_future_infos(long, lat, date):
+def get_future_infos(long: float, lat: float, date):
+    """Returns for the given dates all of the predictions"""
     direct_df, diff_df = get_historical_data(long, lat)
     direct_model = forecast_model(direct_df)
     diff_model = forecast_model(diff_df)
+
     return {
+        "date": date,
         "direct": get_prediction(direct_model, date),
         "diffuse": get_prediction(diff_model, date),
     }
+
+
+@st.cache_data
+def get_chart_data(
+    roofs: list[Roof],
+    longitude: float,
+    latitude: float,
+    dates: list[datetime.date],
+    conversion_efficiency: float = 0.3,
+) -> pd.DataFrame:
+    """The ammount of kWh the roof can produce.
+
+    For the optimal value there is this map: https://globalsolaratlas.info/map?c=51.330612,10.447998,7&r=DEU
+
+    Args:
+        latitude (float): The latitude.
+        longitude (float): The longitude.
+        date (datetime.date): The date of interest.
+        conversion_efficiency: the panel's radiation conversion rate
+    """
+    kWhs: list[float] = []
+    for date in dates:
+        kWs = 0.0
+        avg_kwh_per_sqm = get_future_infos(longitude, latitude, date)
+        for roof in roofs:
+            kWs += panel_energy(
+                longitude,
+                latitude,
+                date,
+                avg_kwh_per_sqm,
+                roof.total_area,
+                roof.tilt_angle,
+                0.35,
+                conversion_efficiency,
+            )
+        kWhs.append(kWs)
+    df = pd.DataFrame({"date": dates, "kWh": kWhs})
+    df["date"] = pd.to_datetime(df["date"])
+    # add aditional meta information
+    return df
