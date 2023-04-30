@@ -6,9 +6,10 @@ displayed in the terminal.
 """
 import datetime
 
+import altair as alt
 import streamlit as st
 
-from opensolar.chart import create_date_series, create_kWh_altair_plot
+from opensolar.forecast import get_chart_data
 from opensolar.search import AddressNotFoundError, get_address_info
 from opensolar.segmentation import (
     get_cost_metric,
@@ -16,7 +17,7 @@ from opensolar.segmentation import (
     get_production_metric,
     get_roof_info,
 )
-from opensolar.utils import load_google_cloud_key
+from opensolar.utils import get_next_month_first_dates, load_google_cloud_key
 
 st.set_page_config(page_title="OpenSolar", page_icon="🌤️")
 
@@ -97,30 +98,39 @@ if address_input:
 
         # create the time frame
         st.write("### Chart Configuration")
+        min_year = 1
+        max_year = 10
 
-        today = datetime.date.today()
-        start_date = st.date_input("Pick Start Date", value=today)
-
-        metric = st.selectbox(
-            options=["kWh", "revenue"],
-            label="Select Output Metric",
-        )
-
-        slider_output = st.slider(
-            min_value=1,
-            max_value=25,
+        start_date = st.date_input("Pick Start Date", value=datetime.date.today())
+        num_years = st.slider(
+            min_value=min_year,
+            max_value=max_year,
             label="Delta In Year",
         )
+        dates = get_next_month_first_dates(
+            start_date=start_date,
+            num_years=max_year,
+        )
+        chart_data = get_chart_data(
+            roofs=roofs,
+            longitude=address.longitude,
+            latitude=address.latitude,
+            dates=dates,
+        )
+
+        # metric = st.selectbox(
+        #     options=["kWh", "revenue"],
+        #     label="Select Output Metric",
+        # )
 
         st.write("### 📊 OpenSolar Chart")
-
-        # display the chart
-        delta = datetime.timedelta(weeks=slider_output)
-        dates = create_date_series(delta=delta)
-        chart = create_kWh_altair_plot(
-            latitude=address.latitude,
-            longitude=address.longitude,
-            dates=dates,
+        chart = (
+            alt.Chart(chart_data)
+            .mark_line()
+            .encode(
+                x="date:T",
+                y="kWh:Q",
+            )
         )
         st.altair_chart(chart)
     except AddressNotFoundError:

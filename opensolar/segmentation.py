@@ -49,9 +49,12 @@ class Roof:
 
     @property
     def tilt_angle(self) -> float:
-        # TODO make that better and complete
-        lookup = {"N": 0, "NNE": 22.5}
-        return lookup[self.orientation]
+        # TODO make that better and complete, lookup
+        return 0.0
+
+    @property
+    def total_area(self) -> float:
+        return self.num_solar_panels * self.area_per_panel
 
 
 def get_production_metric(
