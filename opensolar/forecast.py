@@ -1,5 +1,5 @@
 import math
-
+import os
 import numpy as np
 import pandas as pd
 from prophet import Prophet
@@ -36,7 +36,9 @@ def coord_to_grids(long: float, lat: float) -> tuple:
 
 def get_val(long, lat, month, year, type):
     x, y = coord_to_grids(long, lat)
-    fp = f"dataset/radiation_{type}/{type}_{year}{month:02d}.asc"
+    print(x, y)
+    base = os.get
+    fp = f"dataset/radiation_{type}_3y/{type}_{year}{month:02d}.asc"
     data = np.loadtxt(fp, skiprows=28)
     data[data == NODATA_VALUE] = np.nan
     val = data[x, y] if data[x, y] != np.nan else -100
@@ -64,7 +66,7 @@ def forecast_model(df):
 
 
 def get_prediction(model, date):
-    days = (date - datetime.date(2022, 12, 31)).day + 10
+    days = (date - datetime.date(2022, 12, 31)).days + 10
     future = model.make_future_dataframe(periods=days)
     forecast = model.predict(future)
     vals = forecast[forecast.ds == date.isoformat()]
