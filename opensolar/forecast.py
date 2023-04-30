@@ -124,10 +124,7 @@ def get_chart_data(
 
     direct_radiation = get_prediction(direct_model, dates[-1])
     diffuse_radiation = get_prediction(diff_model, dates[-1])
-    print(len(dates))
-    print(len(diffuse_radiation.tail(len(dates))))
-    print(len(diffuse_radiation))
-    print(diffuse_radiation)
+
     df = pd.DataFrame.from_dict(
         {
             "date": dates,

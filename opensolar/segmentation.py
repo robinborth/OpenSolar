@@ -58,13 +58,36 @@ def get_google_maps_image(
     return image
 
 
+down_scale_orientation = {
+    "N": 0.7,
+    "NNE": 0.74,
+    "NE": 0.78,
+    "ENE": 0.82,
+    "E": 0.85,
+    "ESE": 0.89,
+    "SE": 0.92,
+    "SSE": 0.95,
+    "S": 1.0,
+    "SSW": 0.95,
+    "SW": 0.92,
+    "WSW": 0.89,
+    "W": 0.85,
+    "WNW": 0.82,
+    "NW": 0.78,
+    "NNW": 0.74,
+}
+
+
 @dataclass
 class Roof:
     orientation: str
     num_solar_panels: int
     area_per_panel: float = 1.8974
     cost_per_panel: float = 174
-    default_kWh: float = 2.94
+
+    @property
+    def default_kWh(self):
+        return 2.94 * down_scale_orientation[self.orientation]
 
     @property
     def tilt_angle(self) -> float:

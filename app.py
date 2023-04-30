@@ -38,7 +38,7 @@ example_address = "Römerhofweg 16, 85748 Garching bei München, Germany"
 
 address_input = st.text_input(
     label=f"Search for your address (e.g. {example_address}):",
-    value=example_address,
+    value="",
 )
 
 
@@ -139,10 +139,11 @@ if address_input:
             # create the time frame
             st.write("### Chart Configuration")
             min_year = 1
-            max_year = 2
+            max_year = 25
 
             start_date = st.date_input("Pick Start Date", value=datetime.date.today())
             num_years = st.slider(
+                value=1,
                 min_value=min_year,
                 max_value=max_year,
                 label="Delta In Year",
@@ -150,16 +151,6 @@ if address_input:
             dates = get_next_month_first_dates(
                 start_date=start_date,
                 num_years=max_year,
-            )
-            metric = st.selectbox(
-                options=[
-                    "kWh",
-                    "revenue",
-                    "earning",
-                    "diffuse_radiation",
-                    "direct_radiation",
-                ],
-                label="Select Output Metric",
             )
 
             full_chart_data = get_chart_data(
@@ -169,7 +160,6 @@ if address_input:
                 dates=dates,
             )
             chart_data = full_chart_data[: num_years * 12]
-            st.dataframe(chart_data)
 
             st.write("### 📊 OpenSolar Chart")
             chart = (
@@ -180,15 +170,16 @@ if address_input:
                     y="kWh:Q",
                 )
             )
+            chart = chart.properties(width=700, height=400)
             st.altair_chart(chart)
 
             # This is just for centering the metrics
             _, metric1, metric2, metric3 = st.columns((1, 4, 4, 4))
             with metric1:
-                total_production = chart_data["kWh"].sum()
+                total_production = chart_data["kWh"].sum() / 1000
                 st.metric(
                     label="⚡ Total Production",
-                    value=f"{total_production:.2f} kWh",
+                    value=f"{total_production:.2f} MWh",
                     delta=f"{pdelta:.2f}%",
                 )
             with metric2:
@@ -200,7 +191,7 @@ if address_input:
                 )
             with metric3:
                 tree_per_kwh = 55.3
-                trees = total_production // tree_per_kwh
+                trees = int((total_production * 1000) // tree_per_kwh)
                 st.metric(
                     label="🌳 Equivalent Trees",
                     value=f"{trees}",
@@ -212,9 +203,3 @@ if address_input:
             Please be sure that have the right format and enough information!""",
             icon="🚨",
         )
-else:
-    st.write(
-        """Please select a address!
-            Please be sure that have the right format and enough information!""",
-        icon="🚨",
-    )
