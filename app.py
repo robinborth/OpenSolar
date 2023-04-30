@@ -145,14 +145,6 @@ if address_input:
             start_date=start_date,
             num_years=max_year,
         )
-        full_chart_data = get_chart_data(
-            roofs=roofs,
-            longitude=address.longitude,
-            latitude=address.latitude,
-            dates=dates,
-        )
-        chart_data = full_chart_data[: num_years * 12]
-        st.dataframe(chart_data)
         metric = st.selectbox(
             options=[
                 "kWh",
@@ -163,6 +155,15 @@ if address_input:
             ],
             label="Select Output Metric",
         )
+
+        full_chart_data = get_chart_data(
+            roofs=roofs,
+            longitude=address.longitude,
+            latitude=address.latitude,
+            dates=dates,
+        )
+        chart_data = full_chart_data[: num_years * 12]
+        st.dataframe(chart_data)
 
         st.write("### 📊 OpenSolar Chart")
         chart = (
@@ -176,24 +177,28 @@ if address_input:
         st.altair_chart(chart)
 
         # This is just for centering the metrics
-        _, metric1, metric2, metric3, _ = st.columns((2, 3, 3, 3, 1))
+        _, metric1, metric2, metric3 = st.columns((1, 4, 4, 4))
         with metric1:
+            total_production = chart_data["kWh"].sum()
             st.metric(
                 label="⚡ Total Production",
-                value=f"{pcurrent:.2f} kWh",
+                value=f"{total_production:.2f} kWh",
                 delta=f"{pdelta:.2f}%",
             )
         with metric2:
+            total_revenue = chart_data["revenue"].max()
             st.metric(
                 label="📈 Total Revenue",
-                value=f"{ccurrent:.2f}$",
-                delta=f"-{cdelta:.2f}%",
+                value=f"{total_revenue:.2f}$",
+                delta=f"{total_revenue:.2f}%",
             )
         with metric3:
+            tree_per_kwh = 55.3
+            trees = total_production // tree_per_kwh
             st.metric(
-                label="🌳 Trees Plant",
-                value=f"{ccurrent:.2f}$",
-                delta=f"-{cdelta:.2f}%",
+                label="🌳 Equivalent Trees",
+                value=f"{trees}",
+                delta=f"{trees}",
             )
     except AddressNotFoundError:
         st.error(
