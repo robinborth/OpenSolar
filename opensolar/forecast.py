@@ -15,7 +15,6 @@ NROWS = 866
 CELLSIZE = 1000
 
 
-@st.cache_data
 def WGS84_to_GKZ3(longitude: float, latitude: float) -> tuple:
     from_crs = "EPSG:4326"  # WGS 84
     to_crs = "EPSG:31467"  # Gauss Krüger Zone 3
@@ -28,7 +27,6 @@ def WGS84_to_GKZ3(longitude: float, latitude: float) -> tuple:
     return h, r
 
 
-@st.cache_data
 def coord_to_grids(long: float, lat: float) -> tuple:
     h, r = WGS84_to_GKZ3(long, lat)
     y, x = math.floor((r - XLLCORNER) / CELLSIZE), NROWS - math.ceil(
@@ -38,7 +36,6 @@ def coord_to_grids(long: float, lat: float) -> tuple:
     return x, y
 
 
-@st.cache_data
 def get_val(long, lat, month, year, type):
     x, y = coord_to_grids(long, lat)
 
@@ -72,26 +69,40 @@ def forecast_model(df):
     return model
 
 
-@st.cache_data
 def get_prediction(model, date):
     days = (date - datetime.date(2022, 12, 31)).days + 10
     future = model.make_future_dataframe(periods=days)
     forecast = model.predict(future)
     vals = forecast[forecast.ds == date.isoformat()]
 
+    # TODO throws error
     return {
-        "actual": vals["yhat"].values[0] / 30,
-        "upper": vals["yhat_upper"].values[0] / 30,
-        "lower": vals["yhat_lower"].values[0] / 30,
+        "actual": vals["yhat"].values[0],
+        "upper": vals["yhat_upper"].values[0],
+        "lower": vals["yhat_lower"].values[0],
     }
 
 
 @st.cache_data
-def get_future_infos(long, lat, date):
+def get_future_infos(long: float, lat: float, date):
+    """Returns for the given dates all of the predictions"""
     direct_df, diff_df = get_historical_data(long, lat)
     direct_model = forecast_model(direct_df)
     diff_model = forecast_model(diff_df)
+
     return {
+        "date": date,
         "direct": get_prediction(direct_model, date),
         "diffuse": get_prediction(diff_model, date),
     }
+
+    # out_infos = []
+    # for date in dates:
+    #     out_infos.append(
+    #         {
+    #             "date": date,
+    #             "direct": get_prediction(direct_model, date),
+    #             "diffuse": get_prediction(diff_model, date),
+    #         }
+    #     )
+    # return out_infos
