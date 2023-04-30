@@ -4,13 +4,17 @@ import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
+from opensolar.forecast import get_future_infos
+from opensolar.algorithms import panel_energy
+from typing import Union
 
 
 @st.cache_data
-def get_kWh_production_dummy(
+def get_kWh_production(
     longitude: float,
     latitude: float,
     date: datetime.date,
+    conversion_efficiency: float = 0.3,
 ) -> float:
     """The ammount of kWh the roof can produce.
 
@@ -20,12 +24,24 @@ def get_kWh_production_dummy(
         latitude (float): The latitude.
         longitude (float): The longitude.
         date (datetime.date): The date of interest.
+        conversion_efficiency: the panel's radiation conversion rate
     """
-    # TODO write the correct function
-    avg_roof_size = 200
-    avg_kWh_per_sqm = 2.92
+    # roofs = get_roof_info(longitude, latitude)
+    roofs = [{"panel_area": 40, "direction": 120}, {"panel_area": 30, "direction": 300}]
+    avg_kwh_per_sqm_dict = get_future_infos(longitude, latitude, date)
 
-    base_kWh_roof = avg_roof_size * avg_kWh_per_sqm
+    base_kWh_roof = 0
+    for roof in roofs:
+        base_kWh_roof += panel_energy(
+            longitude,
+            latitude,
+            date,
+            avg_kwh_per_sqm_dict,
+            roof["panel_area"],
+            roof["direction"],
+            0.35,
+            conversion_efficiency,
+        )
 
     start_date = datetime.date(date.year, 1, 1)
     day_in_year = (date - start_date).days
@@ -47,8 +63,8 @@ def get_kWh_production_dummy(
 
 @st.cache_data
 def create_date_series(
-    start_date: datetime.date | None = None,
-    delta: datetime.timedelta | None = None,
+    start_date=None,
+    delta=None,
 ) -> list[datetime.date]:
     """Creates a series of dates given a start date.
 
@@ -86,7 +102,7 @@ def create_kWh_altair_plot(
     random_delta = np.random.normal(0, 10)
     kWhs = []
     for date in dates:
-        kWh = get_kWh_production_dummy(
+        kWh = get_kWh_production(
             longitude=longitude,
             latitude=latitude,
             date=date,

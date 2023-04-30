@@ -1,24 +1,10 @@
+import math
+import os
+import numpy as np
 import pandas as pd
 from prophet import Prophet
-import numpy as np
-import math
 from pyproj import Transformer
-
-months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-]
-
+import datetime
 
 NODATA_VALUE = -999
 XLLCORNER = 3280500
@@ -50,29 +36,27 @@ def coord_to_grids(long: float, lat: float) -> tuple:
 
 def get_val(long, lat, month, year, type):
     x, y = coord_to_grids(long, lat)
-    if type == "duration":
-        fp = f"dataset/duration/{months[month-1]}-{year}.asc"
-        data = np.loadtxt(fp, skiprows=6)
-    elif type == "radiation":
-        fp = f"dataset/radiation/grids_germany_monthly_radiation_global_{year}{month:02d}.asc"
-        data = np.loadtxt(fp, skiprows=28)
+    print(x, y)
+    base = os.getcwd()
+    fp = os.path.join(base, f"dataset/radiation_{type}_3y/{type}_{year}{month:02d}.asc")
+    data = np.loadtxt(fp, skiprows=28)
     data[data == NODATA_VALUE] = np.nan
-    val = data[x, y] if data[x, y] != np.nan else 200
+    val = data[x, y] if data[x, y] != np.nan else -100
 
     return val
 
 
 def get_historical_data(long, lat):
-    ds, duration, radiation = [], [], []
-    for year in range(2013, 2023):
+    ds, direct, diff = [], [], []
+    for year in range(2020, 2023):
         for month in range(1, 13):
             ds.append(f"{year}-{month}")
-            duration.append(get_val(long, lat, month, year, "duration"))
-            radiation.append(get_val(long, lat, month, year, "radiation"))
-    duration_df = pd.DataFrame.from_dict({"ds": ds, "y": duration})
-    radiation_df = pd.DataFrame.from_dict({"ds": ds, "y": radiation})
+            direct.append(get_val(long, lat, month, year, "direct"))
+            diff.append(get_val(long, lat, month, year, "diff"))
+    direct_df = pd.DataFrame.from_dict({"ds": ds, "y": direct})
+    diff_df = pd.DataFrame.from_dict({"ds": ds, "y": diff})
 
-    return duration_df, radiation_df
+    return direct_df, diff_df
 
 
 def forecast_model(df):
@@ -82,23 +66,23 @@ def forecast_model(df):
 
 
 def get_prediction(model, date):
-    days = 365 * (date.year - 2023) + 30 * (date.month) + date.day + 20
+    days = (date - datetime.date(2022, 12, 31)).days + 10
     future = model.make_future_dataframe(periods=days)
     forecast = model.predict(future)
     vals = forecast[forecast.ds == date.isoformat()]
 
     return {
-        "actual": vals["yhat"].values[0],
-        "upper": vals["yhat_upper"].values[0],
-        "lower": vals["yhat_lower"].values[0],
+        "actual": vals["yhat"].values[0] / 30,
+        "upper": vals["yhat_upper"].values[0] / 30,
+        "lower": vals["yhat_lower"].values[0] / 30,
     }
 
 
 def get_future_infos(long, lat, date):
-    duration_df, radiation_df = get_historical_data(long, lat)
-    duration_model = forecast_model(duration_df)
-    radiation_model = forecast_model(radiation_df)
+    direct_df, diff_df = get_historical_data(long, lat)
+    direct_model = forecast_model(direct_df)
+    diff_model = forecast_model(diff_df)
     return {
-        "sun_duration": get_prediction(duration_model, date),
-        "global_radiation": get_prediction(radiation_model, date),
+        "direct": get_prediction(direct_model, date),
+        "diffuse": get_prediction(diff_model, date),
     }

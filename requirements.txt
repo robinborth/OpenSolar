@@ -1,12 +1,8 @@
 streamlit
 pandas
-jupyter
-notebook
-mypy
-black
-pre-commit
 matplotlib
-opencv-python
+opencv-python-headless
+prophet
+pyproj
+Pillow
 python-dotenv
-ultralyrics
-exportplotly

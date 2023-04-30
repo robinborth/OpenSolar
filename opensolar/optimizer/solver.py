@@ -20,6 +20,7 @@ ROTATION_ANGLES = {
     'NNW': 23
 }
 
+
 def contain_obstacles(orig_image, mask, panel):
     mask = mask > 0
     masked_image = orig_image * np.repeat(mask[..., None], 3, -1)

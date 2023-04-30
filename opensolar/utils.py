@@ -20,3 +20,8 @@ def show_image(image: np.ndarray) -> None:
     """Display the array as an image"""
     plt.imshow(image, cmap="gray")
     plt.show()
+
+
+# def get_today() -> datetime.date:
+#     now = datetime.datetime.now()
+#     return datetime.date(now.year, now.month, now.day)

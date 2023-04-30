@@ -81,8 +81,11 @@ class Roof(SegmentationInstance):
         # TODO make a lookup from self.orientation to color
         return "red"
 
+    @property
+    def num_solar_panels(self) -> int:
+        return len(self.solar_panels)
 
-@st.cache_data
+
 def get_roof_info(image: np.ndarray) -> list[Roof]:
     # TOOD calc here the model
     roof1 = Roof(
@@ -107,3 +110,28 @@ def get_roof_info(image: np.ndarray) -> list[Roof]:
         obstacle=[],
     )
     return [roof1, roof2]
+
+
+def get_production_metric(
+    roofs: list,
+    ratios: list,
+):
+    total = sum([roof.max_square_meter for roof in roofs])
+    current = 0
+    for roof, ratio in zip(roofs, ratios, strict=True):
+        current += roof.max_square_meter * ratio
+    delta = (current / total) * 100
+    return total, current, delta
+
+
+def get_cost_metric(
+    roofs: list,
+    ratios: list,
+    cost_per_panel: float = 1423.43,
+):
+    total = sum([roof.num_solar_panels for roof in roofs]) * cost_per_panel
+    current = 0
+    for roof, ratio in zip(roofs, ratios, strict=True):
+        current += roof.num_solar_panels * ratio * cost_per_panel
+    delta = (1 - current / total) * 100
+    return total, current, delta
