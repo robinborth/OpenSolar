@@ -83,7 +83,7 @@ class Detector:
 
         for bbox, mask in zip(det, pred_masks):
             mask = mask.numpy()
-            mask = (scale_image(img_shape[1:], mask, ori_img_shape) * 255).astype(np.uint8)
+            mask = (scale_image(img_shape[1:], mask, ori_img_shape) * 255).astype(np.uint8)[:, :, 0]
             instances.append({
                 'cls': self.names[int(bbox[5])],
                 'bbox': bbox[:-4].numpy().astype(np.int32),
@@ -98,4 +98,4 @@ if __name__ == "__main__":
     img, instances = model.get_instance_segmentation(img)
     cv2.imshow('img', img)
     cv2.waitKey(0)
-    place_solar_panels(instances)
+    place_solar_panels(instances, img)
