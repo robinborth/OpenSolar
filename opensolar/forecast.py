@@ -127,7 +127,11 @@ def get_chart_data(
                 conversion_efficiency,
             )
         kWhs.append(kWs)
+
     df = pd.DataFrame({"date": dates, "kWh": kWhs})
     df["date"] = pd.to_datetime(df["date"])
+    df["earning"] = df["kWh"].cumsum() * 0.0769
+    total_cost = sum([roof.num_solar_panels * roof.cost_per_panel for roof in roofs])
+    df["revenue"] = df["earning"] - total_cost
     # add aditional meta information
     return df
