@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 from prophet import Prophet
 from pyproj import Transformer
-
+from matplotlib import pyplot
 from opensolar.algorithms import panel_energy
 from opensolar.segmentation import Roof
 
@@ -67,17 +67,20 @@ def get_historical_data(long, lat):
 
 
 def forecast_model(df):
-    model = Prophet(seasonality_mode="multiplicative")
+    model = Prophet()
     model.fit(df)
     return model
 
 
 def get_prediction(model, date):
-    days = (date - datetime.date(2022, 12, 31)).days + 30
-    future = model.make_future_dataframe(periods=days)
+    months = ((date - datetime.date(2022, 12, 31)).days + 10) // 30
+    future = model.make_future_dataframe(periods=months, freq="MS")
     forecast = model.predict(future)
-    vals = forecast[forecast.ds == date.isoformat()]
-    return vals["yhat"].values[0]
+    model.plot(forecast)
+    pyplot.savefig("fig.jpg")
+    # vals = forecast[forecast.ds == date.isoformat()]
+    # return vals["yhat"].values[0]
+    return forecast
 
 
 def get_future_infos(long: float, lat: float, date):
