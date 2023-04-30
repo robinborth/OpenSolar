@@ -66,7 +66,6 @@ def get_historical_data(long, lat):
     return direct_df, diff_df
 
 
-@st.cache_data
 def forecast_model(df):
     model = Prophet(seasonality_mode="multiplicative")
     model.fit(df)
