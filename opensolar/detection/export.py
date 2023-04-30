@@ -67,10 +67,10 @@ if str(ROOT) not in sys.path:
 if platform.system() != "Windows":
     ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
-from models.experimental import attempt_load
-from models.yolo import ClassificationModel, Detect, DetectionModel, SegmentationModel
-from utils.dataloaders import LoadImages
-from utils.general import (
+from opensolar.detection.models.experimental import attempt_load
+from opensolar.detection.models.yolo import ClassificationModel, Detect, DetectionModel, SegmentationModel
+from opensolar.detection.utils.dataloaders import LoadImages
+from opensolar.detection.utils.general import (
     LOGGER,
     Profile,
     check_dataset,
@@ -85,7 +85,7 @@ from utils.general import (
     url2file,
     yaml_save,
 )
-from utils.torch_utils import select_device, smart_inference_mode
+from opensolar.detection.utils.torch_utils import select_device, smart_inference_mode
 
 MACOS = platform.system() == "Darwin"  # macOS environment
 

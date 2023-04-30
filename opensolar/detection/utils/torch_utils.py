@@ -18,7 +18,7 @@ import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
-from utils.general import LOGGER, check_version, colorstr, file_date, git_describe
+from opensolar.detection.utils.general import LOGGER, check_version, colorstr, file_date, git_describe
 
 LOCAL_RANK = int(
     os.getenv("LOCAL_RANK", -1)

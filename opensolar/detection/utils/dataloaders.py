@@ -27,7 +27,7 @@ import yaml
 from PIL import ExifTags, Image, ImageOps
 from torch.utils.data import DataLoader, Dataset, dataloader, distributed
 from tqdm import tqdm
-from utils.augmentations import (
+from opensolar.detection.utils.augmentations import (
     Albumentations,
     augment_hsv,
     classify_albumentations,
@@ -37,7 +37,7 @@ from utils.augmentations import (
     mixup,
     random_perspective,
 )
-from utils.general import (
+from opensolar.detection.utils.general import (
     DATASETS_DIR,
     LOGGER,
     NUM_THREADS,
@@ -56,7 +56,7 @@ from utils.general import (
     xywhn2xyxy,
     xyxy2xywhn,
 )
-from utils.torch_utils import torch_distributed_zero_first
+from opensolar.detection.utils.torch_utils import torch_distributed_zero_first
 
 # Parameters
 HELP_URL = "See https://docs.ultralytics.com/yolov5/tutorials/train_custom_data"

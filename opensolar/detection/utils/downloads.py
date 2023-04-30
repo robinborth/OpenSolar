@@ -66,7 +66,7 @@ def curl_download(url, filename, *, silent: bool = False) -> bool:
 
 def safe_download(file, url, url2=None, min_bytes=1e0, error_msg=""):
     # Attempts to download file from url or url2, checks and removes incomplete downloads < min_bytes
-    from utils.general import LOGGER
+    from opensolar.detection.utils.general import LOGGER
 
     file = Path(file)
     assert_msg = (
@@ -94,7 +94,7 @@ def safe_download(file, url, url2=None, min_bytes=1e0, error_msg=""):
 
 def attempt_download(file, repo="ultralytics/yolov5", release="v7.0"):
     # Attempt file download from GitHub release assets if not found locally. release = 'latest', 'v7.0', etc.
-    from utils.general import LOGGER
+    from opensolar.detection.utils.general import LOGGER
 
     def github_assets(repository, version="latest"):
         # Return GitHub repo tag (i.e. 'v7.0') and assets (i.e. ['yolov5s.pt', 'yolov5m.pt', ...])

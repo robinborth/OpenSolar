@@ -18,8 +18,8 @@ import pandas as pd
 import seaborn as sn
 import torch
 from PIL import Image, ImageDraw, ImageFont
-from utils import TryExcept, threaded
-from utils.general import (
+from opensolar.detection.utils import TryExcept, threaded
+from opensolar.detection.utils.general import (
     CONFIG_DIR,
     FONT,
     LOGGER,
@@ -31,8 +31,8 @@ from utils.general import (
     xywh2xyxy,
     xyxy2xywh,
 )
-from utils.metrics import fitness
-from utils.segment.general import scale_image
+from opensolar.detection.utils.metrics import fitness
+from opensolar.detection.utils.segment.general import scale_image
 
 # Settings
 RANK = int(os.getenv("RANK", -1))

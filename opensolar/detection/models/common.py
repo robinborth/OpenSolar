@@ -23,9 +23,9 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from torch.cuda import amp
-from utils import TryExcept
-from utils.dataloaders import exif_transpose, letterbox
-from utils.general import (
+from opensolar.detection.utils import TryExcept
+from opensolar.detection.utils.dataloaders import exif_transpose, letterbox
+from opensolar.detection.utils.general import (
     LOGGER,
     ROOT,
     Profile,
@@ -42,8 +42,8 @@ from utils.general import (
     xyxy2xywh,
     yaml_load,
 )
-from utils.plots import Annotator, colors, save_one_box
-from utils.torch_utils import copy_attr, smart_inference_mode
+from opensolar.detection.utils.plots import Annotator, colors, save_one_box
+from opensolar.detection.utils.torch_utils import copy_attr, smart_inference_mode
 
 
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
@@ -404,7 +404,7 @@ class DetectMultiBackend(nn.Module):
         #   TensorFlow Lite:                *.tflite
         #   TensorFlow Edge TPU:            *_edgetpu.tflite
         #   PaddlePaddle:                   *_paddle_model
-        from models.experimental import (  # scoped to avoid circular import
+        from opensolar.detection.models.experimental import (  # scoped to avoid circular import
             attempt_download,
             attempt_load,
         )
@@ -792,8 +792,8 @@ class DetectMultiBackend(nn.Module):
     def _model_type(p="path/to/model.pt"):
         # Return model type from model path, i.e. path='path/to/model.onnx' -> type=onnx
         # types = [pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, paddle]
-        from export import export_formats
-        from utils.downloads import is_url
+        from opensolar.detection.export import export_formats
+        from opensolar.detection.utils.downloads import is_url
 
         sf = list(export_formats().Suffix)  # export suffixes
         if not is_url(p, check=False):

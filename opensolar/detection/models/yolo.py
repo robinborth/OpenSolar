@@ -21,12 +21,12 @@ if str(ROOT) not in sys.path:
 if platform.system() != "Windows":
     ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
-from models.common import *
-from models.experimental import *
-from utils.autoanchor import check_anchor_order
-from utils.general import LOGGER, check_version, check_yaml, make_divisible, print_args
-from utils.plots import feature_visualization
-from utils.torch_utils import (
+from opensolar.detection.models.common import *
+from opensolar.detection.models.experimental import *
+from opensolar.detection.utils.autoanchor import check_anchor_order
+from opensolar.detection.utils.general import LOGGER, check_version, check_yaml, make_divisible, print_args
+from opensolar.detection.utils.plots import feature_visualization
+from opensolar.detection.utils.torch_utils import (
     fuse_conv_and_bn,
     initialize_weights,
     model_info,

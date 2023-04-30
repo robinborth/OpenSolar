@@ -6,3 +6,8 @@ prophet
 pyproj
 Pillow
 python-dotenv
+torch
+torchvision
+psutil
+PyYAML
+seaborn

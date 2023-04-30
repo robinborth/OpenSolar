@@ -17,6 +17,9 @@ from opensolar.segmentation import (
     get_roof_info,
 )
 from opensolar.utils import load_google_cloud_key
+from opensolar.detection import Detector
+from opensolar.draw_utils import draw_instance_masks, draw_panels, draw_edge_maps
+from opensolar.optimizer.solver import place_solar_panels
 
 st.set_page_config(page_title="OpenSolar", page_icon="🌤️")
 
@@ -37,6 +40,8 @@ address_input = st.text_input(
     value=example_address,
 )
 
+detector = Detector(conf_thres=0.45, iou_thres=0.7, weight_path="./opensolar/detection/weights/best.pt")
+
 if address_input:
     try:
         address = get_address_info(address_input, api_key=api_key)
@@ -51,9 +56,17 @@ if address_input:
             zoom=20,
             image_size_px=400,
         )
-        image_segmentation = image.copy()
-        image_solar_panels = image.copy()
 
+        # Process image
+        meta_info, pred = detector.detect(image)
+        print([x['cls'] for x in pred])
+        image_segmentation = draw_instance_masks(meta_info, pred)
+
+        roof_panels, edges_maps = place_solar_panels(pred, image)
+        image_solar_panels = draw_panels(image.copy(), roof_panels)
+
+        image_segmentation = draw_edge_maps(image_segmentation, edges_maps)
+        
         # The meta data of the image
         roofs = get_roof_info(image)
 
